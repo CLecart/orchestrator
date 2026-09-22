@@ -1,0 +1,138 @@
+# Bonus: Dozzle, web dashboard of the application logs. It streams the logs of
+# every pod of the cluster live (search, filters, several pods side by side),
+# straight from the Kubernetes API: nothing is stored.
+#
+#   URL: http://192.168.56.110:8888
+
+# Read-only access to the pods and their logs, nothing else.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dozzle
+  namespace: dashboards
+  labels:
+    app: dozzle
+    app.kubernetes.io/part-of: orchestrator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dozzle-log-reader
+  labels:
+    app: dozzle
+    app.kubernetes.io/part-of: orchestrator
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+    verbs: ["get"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dozzle-log-reader
+  labels:
+    app: dozzle
+    app.kubernetes.io/part-of: orchestrator
+subjects:
+  - kind: ServiceAccount
+    name: dozzle
+    namespace: dashboards
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dozzle-log-reader
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dozzle
+  namespace: dashboards
+  labels:
+    app: dozzle
+    app.kubernetes.io/part-of: orchestrator
+spec:
+  type: LoadBalancer
+  selector:
+    app: dozzle
+  ports:
+    - name: http
+      port: 8888
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dozzle
+  namespace: dashboards
+  labels:
+    app: dozzle
+    app.kubernetes.io/part-of: orchestrator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dozzle
+  template:
+    metadata:
+      labels:
+        app: dozzle
+        app.kubernetes.io/part-of: orchestrator
+    spec:
+      serviceAccountName: dozzle
+      # No DOZZLE_PORT_* variables from the "dozzle" Service: Dozzle warns about
+      # every unknown DOZZLE_* variable.
+      enableServiceLinks: false
+      # The image declares no user: run the static binary as "nobody".
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dozzle
+          image: amir20/dozzle:v11.1.1
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: DOZZLE_MODE
+              value: k8s
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+              ephemeral-storage: 16Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+              ephemeral-storage: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            # UI settings (not persisted across restarts).
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}

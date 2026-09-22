@@ -1,0 +1,8 @@
+# Bonus: the monitoring dashboards live in their own namespace, apart from the
+# application (default namespace). Deployed by ./orchestrator.sh bonus.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dashboards
+  labels:
+    app.kubernetes.io/part-of: orchestrator

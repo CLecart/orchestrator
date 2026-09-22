@@ -1,0 +1,129 @@
+# Bonus: Headlamp, web dashboard of the cluster (nodes, workloads, logs, events,
+# resource usage). Headlamp is the Kubernetes SIG UI project that replaced the
+# retired Kubernetes Dashboard.
+#
+#   URL:   http://192.168.56.110:4466
+#   Login: a token of the headlamp-admin ServiceAccount, printed by
+#          ./orchestrator.sh bonus-token (valid 24 h)
+
+# Identity of the dashboard users. It is bound to cluster-admin so the
+# dashboard can also act (scale, restart, delete); the token is only issued on
+# demand, expires, and the UI is only reachable from the host-only network.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: headlamp-admin
+  namespace: dashboards
+  labels:
+    app: headlamp
+    app.kubernetes.io/part-of: orchestrator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-admin
+  labels:
+    app: headlamp
+    app.kubernetes.io/part-of: orchestrator
+subjects:
+  - kind: ServiceAccount
+    name: headlamp-admin
+    namespace: dashboards
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+---
+# Identity of the Headlamp server itself: no permission, it only needs the
+# cluster CA and API address of its mounted token to relay the users' requests.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: headlamp
+  namespace: dashboards
+  labels:
+    app: headlamp
+    app.kubernetes.io/part-of: orchestrator
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: headlamp
+  namespace: dashboards
+  labels:
+    app: headlamp
+    app.kubernetes.io/part-of: orchestrator
+spec:
+  type: LoadBalancer
+  selector:
+    app: headlamp
+  ports:
+    - name: http
+      port: 4466
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: headlamp
+  namespace: dashboards
+  labels:
+    app: headlamp
+    app.kubernetes.io/part-of: orchestrator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: headlamp
+  template:
+    metadata:
+      labels:
+        app: headlamp
+        app.kubernetes.io/part-of: orchestrator
+    spec:
+      serviceAccountName: headlamp
+      # The image runs as "headlamp" (uid 100, gid 101).
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: headlamp
+          image: ghcr.io/headlamp-k8s/headlamp:v0.45.0
+          args: ["-in-cluster"]
+          ports:
+            - name: http
+              containerPort: 4466
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+              ephemeral-storage: 32Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+              ephemeral-storage: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
