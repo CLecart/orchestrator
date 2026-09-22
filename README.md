@@ -358,6 +358,7 @@ $ curl -s http://192.168.56.110:3000/health
 
 ```console
 $ ./orchestrator.sh stop
+==> cordoning the nodes (no pod is rescheduled during the shutdown)
 ==> shutting down the VMs
 ==> agent: Attempting graceful shutdown of VM...
 ==> master: Attempting graceful shutdown of VM...
@@ -371,12 +372,14 @@ $ ./orchestrator.sh start
 cluster started
 ```
 
-`stop` éteint l'agent **puis** le master, proprement : chaque kubelet retarde
+`stop` rend d'abord les deux nœuds non planifiables (`kubectl cordon`), puis
+éteint l'agent **puis** le master, proprement : chaque kubelet retarde
 l'extinction de sa VM le temps d'arrêter ses pods (SIGTERM puis délai de
 grâce), si bien que PostgreSQL s'arrête sans avoir à rejouer son journal au
 redémarrage ([§11.4](#114-arrêt-propre-des-nœuds)). Les données sont
-conservées. `start` rallume les VM, attend les nœuds, supprime les pods
-terminés laissés par l'arrêt et attend que tous les pods soient `Ready`.
+conservées. `start` rallume les VM, attend les nœuds, les remet en service
+(`kubectl uncordon`), supprime les pods terminés laissés par l'arrêt et attend
+que tous les pods soient `Ready`.
 
 ---
 
@@ -1034,7 +1037,7 @@ fin de l'extinction, et, sur le master, après l'arrêt du serveur NFS dont ils
 utilisaient les volumes. Résultat : extinction forcée par Vagrant après 60 s
 et base arrêtée brutalement.
 
-Trois réglages corrigent cela :
+Quatre réglages corrigent cela :
 
 1. **Graceful node shutdown du kubelet** (`shutdownGracePeriod: 90s`,
    `shutdownGracePeriodCriticalPods: 15s` dans `/etc/rancher/k3s/kubelet.config`) :
@@ -1044,8 +1047,17 @@ Trois réglages corrigent cela :
 2. **Ordre systemd** sur le master : `nfs-server.service` démarre avant
    `remote-fs-pre.target`, donc s'arrête **après** le démontage des volumes NFS.
 3. **Ordre des VM** : `orchestrator.sh stop` éteint l'agent, puis le master.
+4. **Cordon avant l'arrêt** : `stop` commence par `kubectl cordon master agent`.
+   Sans cela, les pods arrêtés par l'agent sont aussitôt recréés **sur le
+   master** par leurs contrôleurs ; ils sont encore en plein démarrage quand le
+   master s'éteint à son tour, et son extinction reste bloquée jusqu'à ce que
+   Vagrant la force (constaté : 77 s d'attente du kubelet, puis plus de 3
+   minutes au total). Nœuds cordonnés, les pods recréés restent `Pending`
+   jusqu'au prochain `start`, qui fait `kubectl uncordon`. C'est le geste
+   standard avant toute maintenance d'un nœud.
 
-Résultat : `stop` prend une vingtaine de secondes sans extinction forcée, et
+Résultat : `stop` prend une vingtaine de secondes sans extinction forcée, quel
+que soit le nœud qui porte les pods (2 s d'attente du kubelet par nœud), et
 PostgreSQL redémarre sans récupération (`database system was shut down at …`,
 et non `was interrupted`).
 
@@ -1228,7 +1240,14 @@ kubectl config use-context orchestrator
 Après une recréation du cluster, `./orchestrator.sh start` (ou `create`)
 réinstalle le contexte avec les nouveaux certificats.
 
-### 15.9 La machine hôte manque de mémoire
+### 15.9 Les nœuds affichent `Ready,SchedulingDisabled`
+
+Les VM ont été rallumées sans passer par `./orchestrator.sh start` (par
+exemple avec `vagrant up`) : les nœuds sont restés cordonnés par `stop` et les
+pods restent `Pending`. Solution : `./orchestrator.sh start`, ou
+`kubectl uncordon master agent`.
+
+### 15.10 La machine hôte manque de mémoire
 
 Les deux VM réservent 4 Go. Sur une machine déjà chargée (navigateur, IDE),
 fermer des applications ou réduire `memory` dans le `Vagrantfile`

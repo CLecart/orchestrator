@@ -135,12 +135,19 @@ wait_for_nodes() {
   log "waiting for the master and agent nodes to be Ready"
   local deadline=$((SECONDS + WAIT_TIMEOUT)) ready
   while :; do
-    ready=$(kube get nodes --no-headers 2>/dev/null | awk '$2 == "Ready"' | wc -l)
+    # "Ready" or "Ready,SchedulingDisabled" (a node cordoned by stop).
+    ready=$(kube get nodes --no-headers 2>/dev/null | awk '$2 ~ /^Ready(,|$)/' | wc -l)
     [[ "$ready" -eq 2 ]] && break
     [[ $SECONDS -lt $deadline ]] || die "the nodes are not Ready after ${WAIT_TIMEOUT}s (kubectl get nodes)"
     sleep 5
   done
   kube get nodes
+}
+
+# stop cordons both nodes before powering them off; every boot schedules pods
+# on them again.
+uncordon_nodes() {
+  kube uncordon master agent >/dev/null
 }
 
 wait_for_workloads() {
@@ -199,6 +206,7 @@ cmd_create() {
   vagrant up
   install_kubeconfig
   wait_for_nodes
+  uncordon_nodes
   cmd_deploy
   echo "cluster created"
 }
@@ -210,6 +218,7 @@ cmd_start() {
   vagrant up --no-provision
   install_kubeconfig
   wait_for_nodes
+  uncordon_nodes
   delete_terminated_pods
   wait_for_workloads
   # Right after a boot the controllers may still report the replicas of the
@@ -221,6 +230,13 @@ cmd_start() {
 cmd_stop() {
   require vagrant VBoxManage
   require_cluster
+  # Cordon both nodes first: otherwise the pods the agent stops at power-off
+  # are rescheduled onto the master, and are still starting when the master
+  # powers off in turn, which then hangs until Vagrant forces it off.
+  if [[ "$(vm_state master)" == running ]] && command -v kubectl >/dev/null 2>&1; then
+    log "cordoning the nodes (no pod is rescheduled during the shutdown)"
+    kube cordon master agent >/dev/null || true
+  fi
   log "shutting down the VMs"
   # One at a time, the agent first: its pods stop while the master still
   # serves the API and the NFS volumes they have mounted.
