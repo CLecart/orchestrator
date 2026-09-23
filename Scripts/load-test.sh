@@ -43,7 +43,9 @@ kube() { kubectl --context "$KUBE_CONTEXT" "$@"; }
 
 cleanup() {
   echo "deleting the load generator"
-  kube delete pod load-generator --ignore-not-found --wait=false >/dev/null
+  # --grace-period=1: the busybox shell waits on its request loops and would
+  # otherwise sit in Terminating for its whole grace period.
+  kube delete pod load-generator --ignore-not-found --wait=false --grace-period=1 >/dev/null
 }
 trap cleanup EXIT
 
@@ -101,3 +103,6 @@ done
 echo "== autoscalers and pods at the end of the load"
 kube get hpa
 kube get pods -l 'app in (api-gateway, inventory-app)' -o wide
+# 15 s between two metric samples, then the 60 s stabilization window of the
+# autoscalers: the replicas go back to 1 a minute or two after the load stops.
+echo "the autoscalers scale back to 1 replica 1 to 2 minutes from now (kubectl get hpa -w, Ctrl-C to leave)"
