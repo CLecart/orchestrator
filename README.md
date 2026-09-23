@@ -1240,14 +1240,34 @@ kubectl config use-context orchestrator
 Après une recréation du cluster, `./orchestrator.sh start` (ou `create`)
 réinstalle le contexte avec les nouveaux certificats.
 
-### 15.9 Les nœuds affichent `Ready,SchedulingDisabled`
+### 15.9 Une VM reste bloquée après un arrêt brutal de l'hôte
+
+Si la machine hôte s'éteint sans passer par `./orchestrator.sh stop`,
+`vagrant status` affiche `aborted`. Le plus souvent, `./orchestrator.sh start`
+suffit : les bases rejouent leur journal (`automatic recovery in progress`) et
+rien n'est perdu.
+
+Si une VM ne répond plus au SSH et consomme du processeur à vide, `start`
+attend indéfiniment. Il faut alors la redémarrer de force, VirtualBox plutôt
+que Vagrant, puis relancer :
+
+```bash
+VBoxManage controlvm orchestrator-agent poweroff
+vagrant up agent --no-provision
+kubectl get pods -o wide
+```
+
+L'agent ne stocke rien : en dernier recours, `vagrant destroy -f agent` puis
+`vagrant up agent` le réinstalle en trois minutes.
+
+### 15.10 Les nœuds affichent `Ready,SchedulingDisabled`
 
 Les VM ont été rallumées sans passer par `./orchestrator.sh start` (par
 exemple avec `vagrant up`) : les nœuds sont restés cordonnés par `stop` et les
 pods restent `Pending`. Solution : `./orchestrator.sh start`, ou
 `kubectl uncordon master agent`.
 
-### 15.10 La machine hôte manque de mémoire
+### 15.11 La machine hôte manque de mémoire
 
 Les deux VM réservent 4 Go. Sur une machine déjà chargée (navigateur, IDE),
 fermer des applications ou réduire `memory` dans le `Vagrantfile`
