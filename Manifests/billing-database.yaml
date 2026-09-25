@@ -1,4 +1,5 @@
-# billing-db: PostgreSQL 17 server holding the "orders" database of billing-app.
+# billing-db: PostgreSQL 17 server holding the "billing_db" database of billing-app
+# (its "orders" table stores the orders).
 #
 # StatefulSet (and not Deployment): the pod keeps a stable name (billing-db-0)
 # and its own persistent volume, which follows it wherever it is rescheduled.
@@ -60,7 +61,7 @@ spec:
               containerPort: 5432
           env:
             - name: POSTGRES_DB
-              value: orders
+              value: billing_db
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:

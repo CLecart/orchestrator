@@ -2,7 +2,7 @@
 # End-to-end audit scenario against the stack deployed on the K3s cluster:
 #
 #   1. wait for the gateway GET /health
-#   2. POST /api/movies/ -> 200, then GET /api/movies/ contains the new title
+#   2. POST /api/movies/ -> 201, then GET /api/movies/ -> 200 contains the new title
 #   3. POST /api/billing/ -> 200, a new row appears in billing-db (orders table)
 #   4. scale billing-app to 0, POST /api/billing/ -> 200, the message waits in RabbitMQ
 #   5. scale billing-app back to 1 -> the queue is drained and the order is stored
@@ -187,7 +187,7 @@ fi
 
 section "2. Inventory: POST /api/movies/ then GET /api/movies/"
 request POST /api/movies/ '{"title":"A new movie","description":"Very short description"}'
-expect_status 200 'POST /api/movies/ {"title":"A new movie","description":"Very short description"}'
+expect_status 201 'POST /api/movies/ {"title":"A new movie","description":"Very short description"}'
 show_body "$HTTP_BODY"
 request GET /api/movies/
 expect_status 200 'GET /api/movies/'

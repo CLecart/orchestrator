@@ -112,9 +112,9 @@ describe('GET /health', () => {
 });
 
 describe('POST /api/movies', () => {
-  it('creates a movie and answers 200 with the created object', async () => {
+  it('creates a movie and answers 201 with the created object', async () => {
     const res = await request('POST', '/api/movies', { title: 'Alien', description: 'In space...' });
-    assert.equal(res.status, 200);
+    assert.equal(res.status, 201);
     assert.deepEqual(res.body, { id: 1, title: 'Alien', description: 'In space...', created_at: '2026-01-01T00:00:00.000Z' });
   });
 

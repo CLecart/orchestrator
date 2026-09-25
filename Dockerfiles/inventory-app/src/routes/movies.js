@@ -61,8 +61,8 @@ export function createMoviesRouter(db) {
     if (error) {
       return res.status(400).json({ error });
     }
-    // The audit scenario expects 200 (not 201) on creation.
-    res.json(await db.createMovie(value));
+    // 201 Created, as the orchestrator audit of the Zone01 platform expects.
+    res.status(201).json(await db.createMovie(value));
   });
 
   router.delete('/', async (req, res) => {
