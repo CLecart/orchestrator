@@ -1,12 +1,27 @@
-# Audit orchestrator — la grille officielle, question par question
+# Audit orchestrator — la grille de la plateforme, question par question
 
-Ce fichier suit la [grille d'audit officielle](https://github.com/01-edu/public/blob/master/subjects/devops/orchestrator/audit/README.md)
-dans l'ordre exact : **33 points à cocher et 12 questions orales, soit 45
-entrées**. Pour chacune : la question en français, sa formulation exacte dans la
-grille (en italique), la réponse à donner, puis la commande qui la prouve et la
-sortie obtenue sur le cluster réellement construit depuis ce dépôt (captures du
-22 au 25 septembre 2026 ; seules les durées `AGE` et les suffixes aléatoires
-des pods changent d'un jour à l'autre).
+Ce fichier suit **la grille affichée par la plateforme Zone01 au lancement de
+l'audit**, dans l'ordre exact : **36 points à cocher et 12 questions orales,
+soit 48 entrées**. Pour chacune : la question en français, sa formulation
+exacte dans la grille (en italique), la réponse à donner, puis la commande qui
+la prouve et la sortie obtenue sur le cluster réellement construit depuis ce
+dépôt (captures du 22 au 25 septembre 2026 ; seules les durées `AGE` et les
+suffixes aléatoires des pods changent d'un jour à l'autre).
+
+> **La grille de la plateforme n'est pas celle de GitHub.** La
+> [version publique](https://github.com/01-edu/public/blob/master/subjects/devops/orchestrator/audit/README.md)
+> diffère sur ces points, et c'est la version de la plateforme que l'auditeur
+> remplit :
+>
+> | Point | GitHub public | Plateforme Zone01 | Ce projet |
+> |---|---|---|---|
+> | Code de `POST /api/movies/` | 200 | **201** | 201 (entrée 35) |
+> | Base de facturation | `\c orders` | **`\c billing_db`** | `billing_db` (entrées 40-41) |
+> | Question de démarrage (clone au commit figé) | — | **oui** | entrée 1 |
+> | « create, start et stop sont supportés » | — | **oui** | entrée 14 |
+> | « l'infrastructure s'est arrêtée correctement » | — | **oui** | entrée 18 |
+>
+> **Un seul « NO » à une question obligatoire termine l'audit.**
 
 Les explications longues sont dans le [README](README.md) ; les renvois `§` y
 pointent.
@@ -19,6 +34,17 @@ pointent.
 > ./orchestrator.sh test         # 14 vérifications, doit finir par « All 14 checks passed »
 > ```
 >
+> **Libérer de la mémoire avant** : fermer Discord, les onglets Chrome inutiles,
+> les autres projets Docker. Les deux VM prennent 4 Go ; quand le PC swappe,
+> une VM peut se figer au démarrage (c'est arrivé deux fois). Si `start` dépasse
+> 3 minutes ou si `kubectl get nodes` ne répond pas :
+>
+> ```bash
+> vagrant status                                    # repérer la VM concernée
+> VBoxManage controlvm orchestrator-master poweroff # ou orchestrator-agent
+> ./orchestrator.sh start
+> ```
+>
 > Passerelle : `http://192.168.56.110:3000` (ou `192.168.56.111:3000`). Garder
 > ce fichier et le README ouverts dans VS Code. Si l'auditeur préfère Postman à
 > `curl` : méthode `POST`, onglet *Body* → *raw* → *JSON*, et l'en-tête
@@ -28,28 +54,54 @@ pointent.
 
 | Partie de la grille | Entrées |
 |---|---|
-| [A. Général — contenu du dépôt](#a-général--contenu-du-dépôt) | 1 à 2 |
-| [B. Questions : orchestration, Kubernetes, K3s](#b-questions--orchestration-kubernetes-k3s) | 3 à 6 |
-| [C. Documentation et Docker Hub](#c-documentation-et-docker-hub) | 7 à 8 |
-| [D. Le cluster](#d-le-cluster) | 9 à 12 |
-| [E. L'infrastructure](#e-linfrastructure) | 13 à 15 |
-| [F. Les manifests](#f-les-manifests) | 16 à 17 |
-| [G. Questions : IaC et manifests](#g-questions--iac-et-manifests) | 18 à 21 |
-| [H. Les secrets](#h-les-secrets) | 22 |
-| [I. Les ressources déployées](#i-les-ressources-déployées) | 23 à 24 |
-| [J. Questions : StatefulSet, Deployment, scaling, load balancer](#j-questions--statefulset-deployment-scaling-load-balancer) | 25 à 31 |
-| [K. API inventaire](#k-api-inventaire) | 32 à 33 |
-| [L. API facturation](#l-api-facturation) | 34 à 36 |
-| [M. Base de données de facturation](#m-base-de-données-de-facturation) | 37 à 39 |
-| [N. Résilience de la file de messages](#n-résilience-de-la-file-de-messages) | 40 à 41 |
-| [O. Les composants de Kubernetes](#o-les-composants-de-kubernetes) | 42 |
-| [P. Bonus](#p-bonus) | 43 à 45 |
+| [A. Démarrage et contenu du dépôt](#a-démarrage-et-contenu-du-dépôt) | 1 à 3 |
+| [B. Questions : orchestration, Kubernetes, K3s](#b-questions--orchestration-kubernetes-k3s) | 4 à 7 |
+| [C. Documentation et Docker Hub](#c-documentation-et-docker-hub) | 8 à 9 |
+| [D. Le cluster](#d-le-cluster) | 10 à 13 |
+| [E. L'infrastructure](#e-linfrastructure) | 14 à 18 |
+| [F. Les manifests](#f-les-manifests) | 19 à 20 |
+| [G. Questions : IaC et manifests](#g-questions--iac-et-manifests) | 21 à 24 |
+| [H. Les secrets](#h-les-secrets) | 25 |
+| [I. Les ressources déployées](#i-les-ressources-déployées) | 26 à 27 |
+| [J. Questions : StatefulSet, Deployment, scaling, load balancer](#j-questions--statefulset-deployment-scaling-load-balancer) | 28 à 34 |
+| [K. API inventaire](#k-api-inventaire) | 35 à 36 |
+| [L. API facturation](#l-api-facturation) | 37 à 39 |
+| [M. Base de données de facturation](#m-base-de-données-de-facturation) | 40 à 42 |
+| [N. Résilience de la file de messages](#n-résilience-de-la-file-de-messages) | 43 à 44 |
+| [O. Les composants de Kubernetes](#o-les-composants-de-kubernetes) | 45 |
+| [P. Bonus](#p-bonus) | 46 à 48 |
 
 ---
 
-## A. Général — contenu du dépôt
+## A. Démarrage et contenu du dépôt
 
-### 1. Tous les fichiers demandés sont-ils présents ?
+### 1. Le dépôt se clone-t-il au bon commit ?
+
+*Try running these instructions in your terminal to clone the correct version of the repo … Does the repo clone properly and not show an error (fatal: reference is not a tree: …)?*
+
+**Réponse :** Oui. Au lancement de l'audit, la plateforme **fige le commit** à
+auditer et affiche les trois commandes à exécuter ; l'auditeur clone le dépôt
+Zone01 puis se place sur ce commit. Tout ce qui a été poussé avant le
+lancement y figure.
+
+> ⚠️ **Relancer l'audit après le dernier push.** Le commit est figé au moment
+> où l'audit est déclenché : une correction poussée après n'est pas dans la
+> version auditée. Vérifier que le commit affiché par la plateforme est bien le
+> dernier (`git log --oneline -1`).
+
+**Preuve** (avec le commit affiché par la plateforme) :
+
+```console
+$ git clone https://zone01normandie.org/git/clecart/orchestrator
+Cloning into 'orchestrator'...
+$ cd orchestrator
+$ git reset --hard <commit affiché par la plateforme>
+HEAD is now at <commit> <message du commit>
+```
+
+Pas de `fatal: reference is not a tree` : le commit existe sur le dépôt Zone01.
+
+### 2. Tous les fichiers demandés sont-ils présents ?
 
 *Are all the required files present?*
 
@@ -80,9 +132,9 @@ $ git check-ignore -v Manifests/secrets/billing-db-secret.yaml
 .gitignore:6:Manifests/secrets/*.yaml	Manifests/secrets/billing-db-secret.yaml
 ```
 
-### 2. La structure suit-elle celle du sujet ? Sinon, est-elle justifiée ?
+### 3. La structure suit-elle celle du sujet ? Sinon, est-elle justifiée ?
 
-*Does the project as a structure similar to the one below? If not, can the student provide a justification for the chosen project structure?*
+*Does the project have a structure similar to the one below? If not, can the learner provide a justification for the chosen project structure?*
 
 **Réponse :** Oui, c'est la structure du sujet : `Manifests/`, `Scripts/`,
 `Dockerfiles/`, `Vagrantfile`. Deux choix à justifier :
@@ -132,11 +184,11 @@ Détail : README [§16](README.md#16-arborescence-du-dépôt).
 
 ## B. Questions : orchestration, Kubernetes, K3s
 
-Ces trois questions valident un seul point de la grille (entrée 6). Elles
+Ces trois questions valident un seul point de la grille (entrée 7). Elles
 tombent à tous les audits : les réponses s'enchaînent, apprendre les trois
 ensemble.
 
-### 3. Qu'est-ce que l'orchestration de conteneurs, et quels sont ses avantages ?
+### 4. Qu'est-ce que l'orchestration de conteneurs, et quels sont ses avantages ?
 
 *What is container orchestration, and what are its benefits?*
 
@@ -169,7 +221,7 @@ api-gateway-7ff5cbccf9-8n4r7   1/1     Running   0          9s
 
 Le pod supprimé est remplacé en quelques secondes, sans intervention.
 
-### 4. Qu'est-ce que Kubernetes, et quel est son rôle principal ?
+### 5. Qu'est-ce que Kubernetes, et quel est son rôle principal ?
 
 *What is Kubernetes, and what is its main role?*
 
@@ -198,7 +250,7 @@ statefulset.apps/inventory-db   1/1     2d21h
 statefulset.apps/rabbitmq       1/1     2d21h
 ```
 
-### 5. Qu'est-ce que K3s, et quel est son rôle principal ?
+### 6. Qu'est-ce que K3s, et quel est son rôle principal ?
 
 *What is K3s, and what is its main role?*
 
@@ -230,9 +282,9 @@ state.db-wal
 
 Un seul binaire de 76 Mo, et une base SQLite (`state.db`) à la place d'etcd.
 
-### 6. L'étudiant a-t-il répondu correctement ?
+### 7. L'étudiant a-t-il répondu correctement ?
 
-*Did the student reply correctly to the questions?*
+*Did the learner reply correctly to the questions?*
 
 Point coché si les trois réponses précédentes sont données. En une phrase
 chacune : **orchestration** = gérer automatiquement des conteneurs sur plusieurs
@@ -244,9 +296,9 @@ machines.
 
 ## C. Documentation et Docker Hub
 
-### 7. Le README contient-il toute la documentation ?
+### 8. Le README contient-il toute la documentation ?
 
-*Did the README.md file contains all the required information about the solution (prerequisites, configuration, setup, usage, ...)?*
+*Does the README.md file contains all the required information about the solution (prerequisites, configuration, setup, usage, ...)?*
 
 **Réponse :** Oui : prérequis (§1), configuration (§2), installation (§3),
 utilisation (§4), API (§5), scénario d'audit avec les sorties capturées (§6),
@@ -261,13 +313,14 @@ $ grep -c '^## ' README.md
 22
 ```
 
-### 8. Les images des manifests viennent-elles de mon compte Docker Hub ?
+### 9. Les images des manifests viennent-elles de mon compte Docker Hub ?
 
-*Are the docker images used in the YAML manifest uploaded from the student's Docker Hub account?*
+*Are the docker images used in the YAML manifests uploaded from the learner's Docker Hub account?*
 
-**Réponse :** Oui. Les six images sont sur `docker.io/clecart`, en tag fixe
-`1.0.0`, publiques, construites depuis mes Dockerfiles et poussées par
-`./orchestrator.sh push`. Le cluster les tire de là : j'ai vérifié en
+**Réponse :** Oui. Les six images sont sur `docker.io/clecart`, en tags fixes
+(`1.0.0`, et `1.0.1` pour `inventory-app`, qui renvoie désormais `201` à la
+création d'un film), publiques, construites depuis mes Dockerfiles et poussées
+par `./orchestrator.sh push`. Le cluster les tire de là : j'ai vérifié en
 supprimant les images des nœuds et en redéployant, et l'identifiant d'image de
 chaque pod porte le nom du registre et du compte.
 
@@ -276,29 +329,31 @@ chaque pod porte le nom du registre et du compte.
 ```console
 $ grep -h 'image:' Manifests/*.yaml
           image: clecart/api-gateway:1.0.0
-          image: clecart/billing-app:1.0.0
-          image: clecart/billing-database:1.0.0
-          image: clecart/inventory-app:1.0.0
+          image: clecart/inventory-app:1.0.1
           image: clecart/inventory-database:1.0.0
           image: clecart/rabbitmq-server:1.0.0
+          image: clecart/billing-database:1.0.0
+          image: clecart/billing-app:1.0.0
 $ kubectl get pods -o custom-columns='POD:.metadata.name,IMAGE:.status.containerStatuses[0].imageID'
 POD                              IMAGE
-api-gateway-7ff5cbccf9-h6nsl     docker.io/clecart/api-gateway@sha256:aebebbc050a759f9f81bb4ed172fb44c2647700a90efa7640332757853b35aa7
+api-gateway-7ff5cbccf9-w2nvd     docker.io/clecart/api-gateway@sha256:aebebbc050a759f9f81bb4ed172fb44c2647700a90efa7640332757853b35aa7
 billing-app-0                    docker.io/clecart/billing-app@sha256:61f4bc8fac8e9900fb640e387154184eb08fd043f95870498a2920b0557984e0
 billing-db-0                     docker.io/clecart/billing-database@sha256:70380b5602ef8c18214c00efda400ee72d751f7211e153b4e17ed8b5161def6d
-inventory-app-7d56f997b8-lmhlr   docker.io/clecart/inventory-app@sha256:175e33726852eaacabccac0c9e827939ecd6267d2d4a54ffceff1d755cb9488d
+inventory-app-6c9c694d9c-mh4v5   docker.io/clecart/inventory-app@sha256:7e1848ceac1512d4df07b49061d0ae76f59c54ab8cf1cb750371afcdd6355038
 inventory-db-0                   docker.io/clecart/inventory-database@sha256:f5ea338d108ddbea01113d49ac57896debea07b14273179c8c4a6b460764babe
 rabbitmq-0                       docker.io/clecart/rabbitmq-server@sha256:dbff498131905b9c137a27e2719839732e5c34c07f7f2139a3a8f3bd7c18989a
 ```
 
-Et sur le site : <https://hub.docker.com/u/clecart> — six dépôts publics, tag
-`1.0.0`. Les empreintes `sha256` ci-dessus sont celles affichées par Docker Hub.
+Capture faite sur un cluster **recréé de zéro** : les six images ont été tirées
+de Docker Hub à la création. Sur le site : <https://hub.docker.com/u/clecart>
+— six dépôts publics. Les empreintes `sha256` ci-dessus sont celles affichées
+par Docker Hub.
 
 ---
 
 ## D. Le cluster
 
-### 9. kubectl est-il installé et configuré sur ma machine ?
+### 10. kubectl est-il installé et configuré sur ma machine ?
 
 *Is kubectl installed and configured in the learner's machine?*
 
@@ -323,7 +378,7 @@ $ kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}{"\n"}'
 https://192.168.56.110:6443
 ```
 
-### 10. Le cluster a-t-il été créé par un Vagrantfile ?
+### 11. Le cluster a-t-il été créé par un Vagrantfile ?
 
 *Was the cluster created by a Vagrantfile?*
 
@@ -352,7 +407,7 @@ $ grep -nE '^(BOX|K3S_VERSION|MASTER|AGENT) ' Vagrantfile
 20:AGENT  = { name: "agent",  ip: "192.168.56.111", cpus: 2, memory: 2048 }
 ```
 
-### 11. Le cluster a-t-il deux nœuds, master et agent ?
+### 12. Le cluster a-t-il deux nœuds, master et agent ?
 
 *Does the cluster contain two nodes (master and agent)?*
 
@@ -370,7 +425,7 @@ agent    Ready    <none>          2d21h   v1.36.4+k3s1   192.168.56.111   <none>
 master   Ready    control-plane   2d22h   v1.36.4+k3s1   192.168.56.110   <none>        Ubuntu 24.04.3 LTS   6.8.0-86-generic (amd64)   containerd://2.3.4-k3s1.36
 ```
 
-### 12. Les nœuds sont-ils connectés et prêts ?
+### 13. Les nœuds sont-ils connectés et prêts ?
 
 *Are the nodes connected and ready for usage?*
 
@@ -398,9 +453,31 @@ rabbitmq-0 Running master
 
 ## E. L'infrastructure
 
-### 13. `orchestrator.sh` crée-t-il et gère-t-il l'infrastructure ?
+### 14. `orchestrator.sh` supporte-t-il create, start et stop ?
 
-*Did the student provide an `orchestrator.sh` script that runs and creates and manages the infrastructure?*
+*Does the orchestrator.sh script support all required commands: create, start, and stop?*
+
+**Réponse :** Oui, les trois commandes demandées, avec exactement les messages
+du sujet : `cluster created`, `cluster started`, `cluster stopped`.
+
+**Preuve :**
+
+```console
+$ grep -nE '^\s+(create|start|stop)\) ' orchestrator.sh
+291:    create) cmd_create ;;
+292:    start) cmd_start ;;
+293:    stop) cmd_stop ;;
+$ grep -nE 'echo "cluster (created|started|stopped)"' orchestrator.sh
+211:  echo "cluster created"
+227:  echo "cluster started"
+245:  echo "cluster stopped"
+```
+
+Les trois sont exécutées devant l'auditeur aux entrées 15 et 18.
+
+### 15. `orchestrator.sh` crée-t-il et gère-t-il l'infrastructure ?
+
+*Did the learner provide an orchestrator.sh script that runs, creates and manages the infrastructure?*
 
 **Réponse :** Oui. `create` crée les VM, installe K3s, configure kubectl,
 génère les secrets et déploie tout, puis affiche `cluster created` ; `start`
@@ -440,11 +517,11 @@ cluster started
 ```
 
 Durées mesurées : `create` de zéro ≈ 4 min (box déjà téléchargée), `stop`
-≈ 25 s, `start` ≈ 1 min.
+≈ 25 s, `start` 1 à 2 min.
 
-### 14. L'architecture est-elle respectée ?
+### 16. L'architecture est-elle respectée ?
 
-*Did the student respect the architecture?*
+*Did the learner respect the architecture?*
 
 **Réponse :** Oui, composant par composant du schéma du sujet :
 
@@ -460,10 +537,10 @@ Durées mesurées : `create` de zéro ≈ 4 min (box déjà téléchargée), `st
 | Docker Hub → manifests | `image: clecart/<nom>:1.0.0` |
 | kubectl, Vagrant, Vagrantfile | `orchestrator.sh`, contexte `orchestrator`, `Vagrantfile` |
 
-**Preuve :** `kubectl get all` (entrée 23) et le schéma du README
+**Preuve :** `kubectl get all` (entrée 26) et le schéma du README
 [§0.2](README.md#02-architecture-applicative).
 
-### 15. L'infrastructure a-t-elle démarré correctement ?
+### 17. L'infrastructure a-t-elle démarré correctement ?
 
 *Did the infrastructure start correctly?*
 
@@ -491,11 +568,51 @@ $ curl -s -w '\n%{http_code}\n' http://192.168.56.110:3000/health
 200
 ```
 
+### 18. L'infrastructure s'est-elle arrêtée correctement ?
+
+*Did the infrastructure stopped correctly?*
+
+**Réponse :** Oui, et proprement. `stop` commence par rendre les deux nœuds
+non planifiables (`kubectl cordon`), pour qu'aucun pod ne soit déplacé pendant
+l'arrêt, puis éteint l'agent et enfin le master. Sur chaque VM, le kubelet
+retarde l'extinction le temps d'arrêter les pods (SIGTERM, puis leur délai de
+grâce) : PostgreSQL et RabbitMQ s'arrêtent sans perte. Vingt-cinq secondes,
+sans extinction forcée ; les données sont conservées.
+
+**Preuve :**
+
+```console
+$ ./orchestrator.sh stop
+==> cordoning the nodes (no pod is rescheduled during the shutdown)
+==> shutting down the VMs
+==> agent: Attempting graceful shutdown of VM...
+==> master: Attempting graceful shutdown of VM...
+cluster stopped
+$ vagrant status
+Current machine states:
+
+master                    poweroff (virtualbox)
+agent                     poweroff (virtualbox)
+```
+
+Et au redémarrage (`./orchestrator.sh start`), la base confirme qu'elle
+s'était arrêtée proprement, sans avoir besoin de récupération :
+
+```console
+$ kubectl logs billing-db-0 | grep 'database system'
+2026-09-25 10:08:43.589 UTC [10] LOG:  database system was shut down at 2026-09-25 10:00:43 UTC
+2026-09-25 10:08:43.615 UTC [7] LOG:  database system is ready to accept connections
+```
+
+« was shut down » signifie un arrêt propre ; après une coupure brutale,
+PostgreSQL écrirait « was interrupted » puis « automatic recovery in
+progress ». Détail : README [§11.4](README.md#114-arrêt-propre-des-nœuds).
+
 ---
 
 ## F. Les manifests
 
-### 16. Y a-t-il un manifest YAML par service ?
+### 19. Y a-t-il un manifest YAML par service ?
 
 *Is there a YAML Manifest for each service?*
 
@@ -521,7 +638,7 @@ $ grep -h '^kind:' Manifests/*.yaml | sort | uniq -c
       1 kind: StorageClass
 ```
 
-### 17. Aucun identifiant hors des manifests de Secrets ?
+### 20. Aucun identifiant hors des manifests de Secrets ?
 
 *Are credentials not existing in the YAML manifests, except the secret manifests?*
 
@@ -553,9 +670,9 @@ Le premier `grep` ne renvoie rien ; Git ne connaît que les modèles.
 
 ## G. Questions : IaC et manifests
 
-Ces trois questions valident un seul point de la grille (entrée 21).
+Ces trois questions valident un seul point de la grille (entrée 24).
 
-### 18. Qu'est-ce que l'infrastructure as code, et quels sont ses avantages ?
+### 21. Qu'est-ce que l'infrastructure as code, et quels sont ses avantages ?
 
 *What is infrastructure as code and what are the advantages of it?*
 
@@ -578,7 +695,7 @@ Les avantages :
 développement : `./orchestrator.sh destroy` puis `create`, 4 minutes, résultat
 identique.
 
-### 19. Qu'est-ce qu'un manifest Kubernetes ?
+### 22. Qu'est-ce qu'un manifest Kubernetes ?
 
 *Explain what is a K8s manifest.*
 
@@ -618,7 +735,7 @@ horizontalpodautoscaler.autoscaling/inventory-app unchanged
 
 `unchanged` trois fois : l'état réel correspond déjà au fichier.
 
-### 20. Expliquer chaque manifest
+### 23. Expliquer chaque manifest
 
 *Explain each K8s manifests.*
 
@@ -628,7 +745,7 @@ horizontalpodautoscaler.autoscaling/inventory-app unchanged
 |---|---|---|
 | `storage.yaml` | StorageClass `nfs` + 3 PersistentVolumes | Déclare les trois répertoires NFS du master comme volumes de 1 Gio, politique `Retain`, chacun étiqueté pour être réclamé par le bon StatefulSet |
 | `inventory-database.yaml` | Service headless + StatefulSet `inventory-db` | PostgreSQL 17, pod `inventory-db-0`, identifiants depuis `inventory-db-secret`, sondes `pg_isready`, une PVC sur le volume NFS, non-root uid 70 |
-| `billing-database.yaml` | Service headless + StatefulSet `billing-db` | Identique pour la base `orders`, pod `billing-db-0` |
+| `billing-database.yaml` | Service headless + StatefulSet `billing-db` | Identique pour la base `billing_db` (table `orders`), pod `billing-db-0` |
 | `rabbitmq.yaml` | ConfigMap + Service headless + StatefulSet `rabbitmq` | Courtier RabbitMQ 4 avec volume (la file survit à un redémarrage) ; le ConfigMap aligne son seuil mémoire sur la limite du conteneur |
 | `inventory-app.yaml` | Service ClusterIP + Deployment + HPA | API films sur 8080, sans champ `replicas` (le HPA décide : 1 à 3 pods à 60 % de CPU), sonde `/health`, réplicas répartis sur les deux nœuds |
 | `billing-app.yaml` | Service headless + StatefulSet `billing-app` | Consommateur de la file, un seul réplica à identité stable, comme le sujet l'exige |
@@ -654,9 +771,9 @@ Manifests/rabbitmq.yaml:19
 Manifests/storage.yaml:16
 ```
 
-### 21. L'étudiant a-t-il répondu correctement ?
+### 24. L'étudiant a-t-il répondu correctement ?
 
-*Did the student reply correctly to the questions?*
+*Did the learner reply correctly to the questions?*
 
 Point coché si les trois réponses précédentes sont données.
 
@@ -664,7 +781,7 @@ Point coché si les trois réponses précédentes sont données.
 
 ## H. Les secrets
 
-### 22. Tous les identifiants utilisés sont-ils présents dans les secrets ?
+### 25. Tous les identifiants utilisés sont-ils présents dans les secrets ?
 
 *Are all the used credentials and passwords present in the secrets?*
 
@@ -712,7 +829,7 @@ Détail : README [§8](README.md#8-secrets).
 
 ## I. Les ressources déployées
 
-### 23. Toutes les applications demandées sont-elles déployées ?
+### 26. Toutes les applications demandées sont-elles déployées ?
 
 *Are all the required applications deployed?*
 
@@ -768,7 +885,7 @@ horizontalpodautoscaler.autoscaling/inventory-app   Deployment/inventory-app   c
 ```
 
 (Les pods jeunes de quelques secondes viennent des démonstrations des entrées
-3, 25 et 28, jouées juste avant cette capture.) Les Services `ClusterIP None`
+4, 28 et 31, jouées juste avant cette capture.) Les Services `ClusterIP None`
 sont des Services *headless* : le nom DNS pointe directement sur le pod, ce
 qu'exige un StatefulSet. La file existe bien dans RabbitMQ :
 
@@ -778,13 +895,13 @@ name	messages	durable
 billing_queue	0	true
 ```
 
-### 24. Chaque application a-t-elle la bonne configuration ?
+### 27. Chaque application a-t-elle la bonne configuration ?
 
 *Do all apps deploy with the correct configuration?*
 
 **Réponse :** Oui, point par point de la grille :
 - **les bases sont des StatefulSets** avec des volumes qui suivent le pod
-  d'un nœud à l'autre (volumes NFS, démonstration à l'entrée 44) ;
+  d'un nœud à l'autre (volumes NFS, démonstration à l'entrée 47) ;
 - **`api-gateway` et `inventory-app` sont des Deployments** mis à l'échelle
   automatiquement par un HPA : **min 1, max 3, seuil 60 % de CPU** ;
 - **`billing-app` est un StatefulSet.**
@@ -843,9 +960,9 @@ maximum, en 15 secondes. Le pourcentage est calculé sur la **demande** de CPU
 
 ## J. Questions : StatefulSet, Deployment, scaling, load balancer
 
-Ces six questions valident un seul point de la grille (entrée 31).
+Ces six questions valident un seul point de la grille (entrée 34).
 
-### 25. Qu'est-ce qu'un StatefulSet ?
+### 28. Qu'est-ce qu'un StatefulSet ?
 
 *What is StatefulSet in K8s?*
 
@@ -875,7 +992,7 @@ billing-db-0   1/1     Running   0          11s
 
 Le pod revient avec **le même nom** et retrouve sa PVC `data-billing-db-0`.
 
-### 26. Qu'est-ce qu'un Deployment ?
+### 29. Qu'est-ce qu'un Deployment ?
 
 *What is deployment in K8s?*
 
@@ -898,7 +1015,7 @@ REVISION  CHANGE-CAUSE
 1         <none>
 ```
 
-### 27. Quelle est la différence entre Deployment et StatefulSet ?
+### 30. Quelle est la différence entre Deployment et StatefulSet ?
 
 *What is the difference between deployment and StatefulSet in K8s?*
 
@@ -931,7 +1048,7 @@ inventory-db-0                   StatefulSet
 rabbitmq-0                       StatefulSet
 ```
 
-### 28. Qu'est-ce que la mise à l'échelle, et pourquoi l'utiliser ?
+### 31. Qu'est-ce que la mise à l'échelle, et pourquoi l'utiliser ?
 
 *What is scaling, and why do we use it?*
 
@@ -947,7 +1064,7 @@ consommer que le nécessaire** le reste du temps, et **gagner en
 disponibilité** (plusieurs copies sur plusieurs nœuds : la perte d'un nœud
 n'arrête pas le service).
 
-**Preuve :** la démonstration `./orchestrator.sh load` de l'entrée 24, et
+**Preuve :** la démonstration `./orchestrator.sh load` de l'entrée 27, et
 manuellement :
 
 ```console
@@ -962,7 +1079,7 @@ inventory-app-7d56f997b8-q5vjp Running agent
 Trois copies, réparties sur les deux nœuds. (Le HPA ramène ensuite à 1 tout
 seul, puisque le CPU est bas.)
 
-### 29. Qu'est-ce qu'un load balancer, et quel est son rôle ?
+### 32. Qu'est-ce qu'un load balancer, et quel est son rôle ?
 
 *What is a load balancer, and what is its role?*
 
@@ -990,10 +1107,10 @@ $ kubectl get endpointslices -l kubernetes.io/service-name=inventory-app -o json
 10.42.0.64 10.42.1.65 10.42.0.70
 ```
 
-Avec les 3 pods d'inventaire de l'entrée 28, le Service a trois adresses de
+Avec les 3 pods d'inventaire de l'entrée 31, le Service a trois adresses de
 destination : une sur l'agent (`10.42.1.x`), deux sur le master (`10.42.0.x`).
 
-### 30. Pourquoi ne pas déployer la base de données en Deployment ?
+### 33. Pourquoi ne pas déployer la base de données en Deployment ?
 
 *Why we don't put the database as a deployment?*
 
@@ -1019,9 +1136,9 @@ $ kubectl get statefulset billing-db -o jsonpath='{.spec.replicas} {.spec.update
 1 RollingUpdate OrderedReady
 ```
 
-### 31. L'étudiant a-t-il répondu correctement à toutes ces questions ?
+### 34. L'étudiant a-t-il répondu correctement à toutes ces questions ?
 
-*Did the student reply correctly to all the above questions?*
+*Did the learner reply correctly to all the above questions?*
 
 Point coché si les six réponses précédentes sont données.
 
@@ -1029,12 +1146,16 @@ Point coché si les six réponses précédentes sont données.
 
 ## K. API inventaire
 
-### 32. `POST /api/movies/` répond-il 200 ?
+### 35. `POST /api/movies/` répond-il 201 ?
 
-*Open Postman and make a POST request to `http://[GATEWAY_IP]:[GATEWAY_PORT]/api/movies/` … Can you confirm the response was the success code 200?*
+*Open Postman and make a POST request to `http://[GATEWAY_IP]:[GATEWAY_PORT]/api/movies/` … Can you confirm the response was the success code 201?*
 
-**Réponse :** Oui : la passerelle relaie la requête à `inventory-app`, qui
-insère le film dans `inventory-db` et renvoie l'enregistrement créé.
+**Réponse :** Oui, **`201 Created`** : la passerelle relaie la requête à
+`inventory-app`, qui insère le film dans `inventory-db` et renvoie
+l'enregistrement créé. 201 est le code HTTP normal d'une création de
+ressource (200 signifie seulement « OK »). C'est ce qu'attend la grille de la
+plateforme ; la version publique de GitHub disait 200, d'où l'image
+`inventory-app:1.0.1`.
 
 **Preuve :**
 
@@ -1042,36 +1163,37 @@ insère le film dans `inventory-db` et renvoie l'enregistrement créé.
 $ curl -s -w '\n-> HTTP %{http_code}\n' -X POST http://192.168.56.110:3000/api/movies/ \
     -H 'Content-Type: application/json' \
     -d '{"title":"A new movie","description":"Very short description"}'
-{"id":7,"title":"A new movie","description":"Very short description","created_at":"2026-09-25T07:22:31.873Z"}
--> HTTP 200
+{"id":1,"title":"A new movie","description":"Very short description","created_at":"2026-09-25T09:58:06.439Z"}
+-> HTTP 201
+$ curl -s -i -X POST http://192.168.56.110:3000/api/movies/ \
+    -H 'Content-Type: application/json' \
+    -d '{"title":"Second movie","description":"Status line check"}' | head -1
+HTTP/1.1 201 Created
 ```
 
 Dans Postman : `POST`, URL `http://192.168.56.110:3000/api/movies/`, *Body* →
-*raw* → *JSON*, coller le corps, *Send* : `Status: 200 OK`.
+*raw* → *JSON*, coller le corps, *Send* : `Status: 201 Created`.
 
-### 33. `GET /api/movies/` répond-il 200 avec le dernier film en JSON ?
+### 36. `GET /api/movies/` répond-il 200 avec le dernier film en JSON ?
 
 *In Postman make a GET request … Can you confirm the response was success code 200 and the body of the response is in json with the information of the last added movie?*
 
-**Réponse :** Oui : une liste JSON, dont le dernier élément est le film qu'on
-vient d'ajouter (`id 7`).
+**Réponse :** Oui : `200`, et une liste JSON dont le dernier élément est le
+dernier film ajouté.
 
 **Preuve :**
 
 ```console
 $ curl -s -w '\n-> HTTP %{http_code}\n' http://192.168.56.110:3000/api/movies/
-[{"id":1,"title":"A new movie","description":"Very short description","created_at":"2026-09-22T09:23:30.657Z"}, [...] ,{"id":7,"title":"A new movie","description":"Very short description","created_at":"2026-09-25T07:22:31.873Z"}]
+[{"id":1,"title":"A new movie","description":"Very short description","created_at":"2026-09-25T09:58:06.439Z"},{"id":2,"title":"Second movie","description":"Status line check","created_at":"2026-09-25T09:58:06.460Z"}]
 -> HTTP 200
 ```
-
-Les films 1 à 6 proviennent des tests des jours précédents : ils prouvent au
-passage que les données survivent aux arrêts et redémarrages du cluster.
 
 ---
 
 ## L. API facturation
 
-### 34. `POST /api/billing/` répond-il 200 ?
+### 37. `POST /api/billing/` répond-il 200 ?
 
 *Open Postman and make a POST request to `…/api/billing/` … Can you confirm the response was success code 200?*
 
@@ -1088,10 +1210,10 @@ $ curl -s -w '\n-> HTTP %{http_code}\n' -X POST http://192.168.56.110:3000/api/b
 {"message":"Message posted"}
 -> HTTP 200
 $ kubectl logs billing-app-0 | grep 'order stored' | tail -1
-{"time":"2026-09-25T07:22:31.991Z","level":"info","msg":"order stored","id":13,"userId":20}
+{"time":"2026-09-25T09:58:05.969Z","level":"info","msg":"order stored","id":1,"userId":20}
 ```
 
-### 35. `billing-app` est-il correctement arrêté ?
+### 38. `billing-app` est-il correctement arrêté ?
 
 *Stop the billing-app container. Can you confirm the billing-app container was correctly stopped?*
 
@@ -1107,14 +1229,14 @@ $ kubectl scale statefulset billing-app --replicas=0
 statefulset.apps/billing-app scaled
 $ kubectl get statefulset billing-app
 NAME          READY   AGE
-billing-app   0/0     2d21h
+billing-app   0/0     105s
 $ kubectl get pods -l app=billing-app
 No resources found in default namespace.
 ```
 
 `0/0` et aucun pod : le service de facturation est arrêté.
 
-### 36. `POST /api/billing/` répond-il 200 même sans `billing-app` ?
+### 39. `POST /api/billing/` répond-il 200 même sans `billing-app` ?
 
 *Open Postman and make a POST request to `…/api/billing/` … Can you confirm the response was success code 200 even if the billing_app is not working?*
 
@@ -1144,61 +1266,67 @@ Un message attend dans la file.
 
 ## M. Base de données de facturation
 
-### 37. La base `orders` est-elle listée ?
+### 40. La base de facturation `billing_db` est-elle listée ?
 
-*Run `kubectl exec -it pods/billing-db-0 -- sh` to enter into the pod, then run `sudo -i -u postgres`, then `psql` and once in the database enter `\l`. Can you confirm the orders database is listed?*
+*Run `kubectl exec -it pods/billing-db-0 -- sh` to enter into the pod, then run `sudo -i -u postgres`, then `psql` and once in the database enter `\l`. Can you confirm the billing database is listed?*
 
-**Réponse :** Oui. Une différence avec la commande de la grille, à expliquer :
+**Réponse :** Oui, la base **`billing_db`** est listée. La grille rappelle que
+le nom du pod peut varier (`kubectl get pods | grep billing-db`) : ici c'est
+bien `billing-db-0`, nom stable garanti par le StatefulSet.
+
+Une différence avec la commande de la grille, à expliquer :
 **`sudo -i -u postgres` est inutile, et `sudo` n'existe même pas dans
 l'image**, parce que le conteneur tourne **déjà** sous l'utilisateur `postgres`
 (uid 70), jamais sous root — c'est une règle de sécurité de mes images. Les
 variables `PGUSER` et `PGDATABASE` sont préremplies dans le pod, donc `psql`
-seul ouvre directement la base `orders` avec le compte `billing_user`.
+seul ouvre directement la base `billing_db` avec le compte `billing_user`.
 
 **Preuve :**
 
 ```console
+$ kubectl get pods | grep billing-db
+billing-db-0                     1/1     Running   0          108s
 $ kubectl exec -it pods/billing-db-0 -- sh
 / $ whoami
 postgres
+/ $ sudo -i -u postgres
+sh: sudo: not found
 / $ psql
 psql (17.11)
 Type "help" for help.
 
-orders=# \l
-                                                      List of databases
-   Name    |    Owner     | Encoding | Locale Provider | Collate | Ctype | Locale | ICU Rules |       Access privileges
------------+--------------+----------+-----------------+---------+-------+--------+-----------+-------------------------------
- orders    | billing_user | UTF8     | libc            | C       | C     |        |           |
- postgres  | billing_user | UTF8     | libc            | C       | C     |        |           |
- template0 | billing_user | UTF8     | libc            | C       | C     |        |           | =c/billing_user              +
-           |              |          |                 |         |       |        |           | billing_user=CTc/billing_user
- template1 | billing_user | UTF8     | libc            | C       | C     |        |           | =c/billing_user              +
-           |              |          |                 |         |       |        |           | billing_user=CTc/billing_user
+billing_db=# \l
+                                                       List of databases
+    Name    |    Owner     | Encoding | Locale Provider | Collate | Ctype | Locale | ICU Rules |       Access privileges
+------------+--------------+----------+-----------------+---------+-------+--------+-----------+-------------------------------
+ billing_db | billing_user | UTF8     | libc            | C       | C     |        |           |
+ postgres   | billing_user | UTF8     | libc            | C       | C     |        |           |
+ template0  | billing_user | UTF8     | libc            | C       | C     |        |           | =c/billing_user              +
+            |              |          |                 |         |       |        |           | billing_user=CTc/billing_user
+ template1  | billing_user | UTF8     | libc            | C       | C     |        |           | =c/billing_user              +
+            |              |          |                 |         |       |        |           | billing_user=CTc/billing_user
 (4 rows)
 ```
 
-La ligne `orders` est là. (Sortir de `psql` : `\q`, puis `exit`.)
+La ligne `billing_db` est là. (Sortir de `psql` : `\q`, puis `exit`.)
 
-### 38. La commande `user_id = 20` est-elle présente ?
+### 41. La commande `user_id = 20` est-elle présente ?
 
-*Still in psql run `\c orders` and then `TABLE orders;`. Can you confirm the order with user_id = 20 is listed properly?*
+*Still in psql run `\c billing_db` and then `TABLE orders;`. Can you confirm the order with user_id = 20 is listed properly?*
 
 **Réponse :** Oui : la commande envoyée pendant que `billing-app` tournait
-(entrée 34) est enregistrée, c'est la dernière ligne de la table.
+(entrée 37) est dans la table `orders` de la base `billing_db`.
 
 **Preuve :**
 
 ```console
-orders=# \c orders
-You are now connected to database "orders" as user "billing_user".
-orders=# TABLE orders;
+billing_db=# \c billing_db
+You are now connected to database "billing_db" as user "billing_user".
+billing_db=# TABLE orders;
  id | user_id | number_of_items | total_amount |          created_at
 ----+---------+-----------------+--------------+-------------------------------
-[...]
- 12 |      22 |              10 |        50.00 | 2026-09-23 11:25:37.668561+00
- 13 |      20 |              99 |       250.00 | 2026-09-25 07:22:32.832081+00
-(13 rows)
+  1 |      20 |              99 |       250.00 | 2026-09-25 09:58:06.505485+00
+(1 row)
 ```
 
 Sans entrer dans le pod, la même chose en une commande :
@@ -1207,37 +1335,36 @@ Sans entrer dans le pod, la même chose en une commande :
 $ kubectl exec billing-db-0 -- psql -c 'TABLE orders'
 ```
 
-### 39. La commande `user_id = 22` est-elle absente ?
+### 42. La commande `user_id = 22` est-elle absente ?
 
 *Can you confirm the order with user_id = 22 is NOT listed?*
 
-**Réponse :** Oui, elle est absente : elle attend dans la file RabbitMQ tant
-que `billing-app` est arrêté. La dernière ligne de la table est la commande
-20 (`id 13`, 07:22:32) ; rien n'est apparu depuis.
+**Réponse :** Oui, elle est absente : la table ne contient que la commande 20.
+La commande 22 attend dans la file RabbitMQ tant que `billing-app` est arrêté.
 
-**Preuve :**
+**Preuve :** la sortie de l'entrée 41 (une seule ligne, `user_id = 20`), et :
 
 ```console
-$ kubectl exec billing-db-0 -- psql -tAc "SELECT count(*) FROM orders WHERE created_at > now() - interval '5 minutes' AND user_id = 22"
+$ kubectl exec billing-db-0 -- psql -tAc "SELECT count(*) FROM orders WHERE user_id = 22"
 0
 $ kubectl exec rabbitmq-0 -- rabbitmqctl list_queues name messages | tail -1
 billing_queue	1
 ```
 
-Zéro commande récente de l'utilisateur 22 en base, un message en attente.
+Zéro commande de l'utilisateur 22 en base, un message en attente.
 
-> La ligne `12 | 22` visible plus haut date du 23 septembre : le scénario a
-> été joué plusieurs fois. Ce qui compte est qu'aucune ligne 22 n'est apparue
-> **depuis** l'arrêt de `billing-app` : comparer `created_at` à l'heure de la
-> requête.
+> Si le scénario a déjà été joué avant l'audit, des lignes `user_id = 22`
+> plus anciennes peuvent exister. Ce qui compte est qu'aucune ligne 22 n'est
+> apparue **depuis** l'arrêt de `billing-app` : comparer `created_at` à l'heure
+> de la requête. Sur un cluster neuf, la table est vide au départ.
 
 ---
 
 ## N. Résilience de la file de messages
 
-### 40. `billing-app` redémarre-t-il correctement ?
+### 43. `billing-app` a-t-il correctement redémarré ?
 
-*Start the billing-app container. Can you confirm the billing-app container was correctly stopped?* (la grille reprend la phrase de l'entrée 35 ; il s'agit ici du redémarrage)
+*Start the billing-app container. Can you confirm the billing-app container was correctly started?*
 
 **Réponse :** Oui : je remets le StatefulSet à 1 réplica, le pod
 `billing-app-0` est recréé, se connecte à la base et à RabbitMQ, et consomme
@@ -1254,53 +1381,56 @@ $ kubectl get pods billing-app-0
 NAME            READY   STATUS    RESTARTS   AGE
 billing-app-0   1/1     Running   0          6s
 $ kubectl logs billing-app-0 | grep -E 'consumer ready|order stored'
-{"time":"2026-09-25T07:22:40.424Z","level":"info","msg":"rabbitmq consumer ready","queue":"billing_queue"}
-{"time":"2026-09-25T07:22:40.431Z","level":"info","msg":"order stored","id":14,"userId":22}
+{"time":"2026-09-25T09:58:14.671Z","level":"info","msg":"rabbitmq consumer ready","queue":"billing_queue"}
+{"time":"2026-09-25T09:58:14.680Z","level":"info","msg":"order stored","id":2,"userId":22}
 ```
 
-Sept millisecondes entre la connexion à la file et l'enregistrement de la
+Neuf millisecondes entre la connexion à la file et l'enregistrement de la
 commande en attente.
 
-### 41. La commande `user_id = 22` est-elle maintenant présente ?
+### 44. La commande `user_id = 22` est-elle maintenant présente ?
 
 *Can you confirm the order with user_id = 22 is now listed properly?*
 
 **Réponse :** Oui : la commande envoyée pendant l'arrêt est maintenant en
-base (`id 14`), et la file est vide. **Aucune commande n'a été perdue** pendant
-la panne du service de facturation : c'est la résilience apportée par la file
-de messages.
+base, et la file est vide. **Aucune commande n'a été perdue** pendant la panne
+du service de facturation : c'est la résilience apportée par la file de
+messages.
 
 **Preuve :**
 
 ```console
-$ kubectl exec billing-db-0 -- psql -c 'TABLE orders' | tail -3
- 14 |      22 |              10 |        50.00 | 2026-09-25 07:22:41.291076+00
-(14 rows)
+$ kubectl exec billing-db-0 -- psql -c 'TABLE orders'
+ id | user_id | number_of_items | total_amount |          created_at
+----+---------+-----------------+--------------+-------------------------------
+  1 |      20 |              99 |       250.00 | 2026-09-25 09:58:06.505485+00
+  2 |      22 |              10 |        50.00 | 2026-09-25 09:58:15.211668+00
+(2 rows)
 
 $ kubectl exec rabbitmq-0 -- rabbitmqctl list_queues name messages | tail -1
 billing_queue	0
 ```
 
-**Tout le scénario 32 → 41 en une commande**, si l'auditeur préfère :
+**Tout le scénario 35 → 44 en une commande**, si l'auditeur préfère :
 
 ```console
 $ ./orchestrator.sh test
 [...]
 == Summary ==
   PASS  GET /health -> HTTP 200
-  PASS  POST /api/movies/ {"title":"A new movie","description":"Very short description"} -> HTTP 200
+  PASS  POST /api/movies/ {"title":"A new movie","description":"Very short description"} -> HTTP 201
   PASS  GET /api/movies/ -> HTTP 200
   PASS  GET /api/movies/ returns a JSON list containing "A new movie"
-  PASS  orders of user 20 in billing-db: 0
+  PASS  orders of user 20 in billing-db: 1
   PASS  POST /api/billing/ {"user_id":"20","number_of_items":"99","total_amount":"250"} -> HTTP 200
-  PASS  order of user 20 stored: 0 -> 1
+  PASS  order of user 20 stored: 1 -> 2
   PASS  billing-app is stopped (no billing-app pod left)
   PASS  POST /api/billing/ {"user_id":"22","number_of_items":"10","total_amount":"50"} -> HTTP 200
   PASS  queue billing_queue holds 1 message
-  PASS  order of user 22 NOT stored yet (0 row(s))
+  PASS  order of user 22 NOT stored yet (1 row(s))
   PASS  billing-app is running again
   PASS  queue billing_queue is drained (0 message)
-  PASS  order of user 22 stored: 0 -> 1
+  PASS  order of user 22 stored: 1 -> 2
 All 14 checks passed
 ```
 
@@ -1308,9 +1438,9 @@ All 14 checks passed
 
 ## O. Les composants de Kubernetes
 
-### 42. Expliquer tous les composants de Kubernetes en moins de 15 minutes
+### 45. Expliquer tous les composants de Kubernetes en moins de 15 minutes
 
-*In less than 15 minutes and with the help of Google the student must explain all Kubernetes components and their roles. Can the learner explain the K8s components in less than 15 minutes?*
+*In less than 15 minutes and with the help of Google the learner must explain all Kubernetes components and their roles. Can the learner explain the K8s components in less than 15 minutes?*
 
 Le schéma de la grille est celui de la documentation officielle :
 <https://kubernetes.io/images/docs/components-of-kubernetes.svg>. L'afficher, et
@@ -1404,9 +1534,9 @@ Détail et schéma : README [§18](README.md#18-les-composants-de-kubernetes).
 
 ## P. Bonus
 
-### 43. Ma propre solution *play-with-containers* est-elle utilisée ?
+### 46. Ma propre solution *play-with-containers* est-elle utilisée ?
 
-*+Did the student used his/her own play-with-container solution instead of the provided one?*
+*Bonus — Did the learner used his/her own play-with-container solution instead of the provided one?*
 
 **Réponse :** Oui. Les six images sont construites depuis **mes** Dockerfiles
 de *play-with-containers*, pas depuis ceux fournis par le sujet : Alpine 3.23,
@@ -1439,9 +1569,9 @@ postgres (PostgreSQL) 17.11
 Les Dockerfiles du sujet utilisent `python:3.12-alpine` et `debian:bullseye`
 avec PostgreSQL 13 : ce ne sont pas ceux-là.
 
-### 44. Des bonus optionnels ont-ils été ajoutés ?
+### 47. Des bonus optionnels ont-ils été ajoutés ?
 
-*+Did the student add any optional bonus?*
+*Bonus — Did the learner add any optional bonus?*
 
 **Réponse :** Oui, cinq :
 
@@ -1493,9 +1623,9 @@ $ curl -s http://192.168.56.110:3000/api/movies/ | python3 -c 'import sys,json; 
 Le pod est passé du master à l'agent, l'agent a monté le volume par le réseau,
 et les 6 films qu'il y avait ce jour-là sont toujours là.
 
-### 45. Le projet est-il remarquable ?
+### 48. Le projet est-il remarquable ?
 
-*+Is this project an outstanding project?*
+*Bonus — Is this project an outstanding project?*
 
 **À l'appréciation de l'auditeur.** Ce qu'il peut retenir : une infrastructure
 entièrement reproductible en une commande et vérifiée de zéro ; aucun secret
